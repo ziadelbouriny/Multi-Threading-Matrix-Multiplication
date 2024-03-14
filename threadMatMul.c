@@ -99,8 +99,6 @@ void readFromFile(char *path1, char *path2)
         
         f1 = fopen(path1, "r");
         
-        printf("%s, %s\n", path1, path2);
-        
         if (f1 == NULL)
     	{
         	printf("File name entered doesn't exist in this directory!\n");
@@ -150,6 +148,12 @@ void readFromFile(char *path1, char *path2)
     	   for (int j = 0; j < c2; j++) 
     	        fscanf(f2, "%d", &mat2[i][j]);
     	}
+    	
+    	if(c1 != r2)
+    	{
+        	printf("Error in dimensions\n");
+        	exit(0);
+    	}
     
     	res_mul = createMat(r1, c2);
     	res_row = createMat(r1, c2);
@@ -170,6 +174,9 @@ int **createMat(int rows, int cols)
 
 void threadPerEle()
 {
+	struct timeval stop , start;
+    	gettimeofday(&start , NULL);
+    	
 	pthread_t threads[r1 * c2]; 
 	int index = 0;
     
@@ -187,10 +194,17 @@ void threadPerEle()
     
     	for (int i = 0 ; i < r1 * c2; i++)
         	pthread_join(threads[i], NULL);
+        	
+        gettimeofday(&stop , NULL);
+    	printf("Time taken per element method: %lu microsecond\n", stop.tv_usec - start.tv_usec);
+    	printf("Number of threads created in per element method: %d\n\n", r1 * c2);	
 }  
 
 void threadPerRow()
 {
+	struct timeval stop , start ;
+    	gettimeofday(&start , NULL);
+    
 	pthread_t threads[r1]; 
 	int index = 0;
     
@@ -204,14 +218,25 @@ void threadPerRow()
     
     	for (int i = 0 ; i < r1; i++)
         	pthread_join(threads[i], NULL);
+        	
+        gettimeofday(&stop , NULL);
+    	printf("Time taken per row method: %lu microsecond\n", stop.tv_usec - start.tv_usec);
+    	printf("Number of threads created in per row method: %d\n\n", r1);	
 }
 
 void threadPerMat()
 {
+	struct timeval stop , start;
+    	gettimeofday(&start , NULL);
+    	
 	pthread_t threads ;
     
     	pthread_create(&threads , NULL , &matMul , NULL);	
    	pthread_join(threads , NULL);
+   	
+   	gettimeofday(&stop , NULL);
+    	printf("Time taken per matrix method: %lu microsecond\n", stop.tv_usec - start.tv_usec);
+    	printf("Number of threads created in per matrix method: 1\n\n");
 }    
 
 void *matMulPerRow(void *params)
@@ -270,13 +295,13 @@ void writeInFile(char *path, int method)
 	if(f == NULL)
 	{
 		printf("Error opening file\n");
-		exit(EXIT_FAILURE);
+		exit(0);
 	} 
 	
 	switch(method)
 	{
 		case 1:
-			fprintf(f , "Method: A thread per matrix\nrow=%d col=%d\n",r1 , c2);
+			fprintf(f, "Method: A thread per matrix\nrow=%d col=%d\n", r1, c2);
         		for(int i = 0 ; i < r1 ; i++)
         		{
         	    		for(int j = 0 ; j < c2 ; j++)
@@ -287,7 +312,7 @@ void writeInFile(char *path, int method)
         		break;
 			
 		case 2:
-			fprintf(f , "Method: A thread per matrix\nrow=%d col=%d\n",r1 , c2);
+			fprintf(f, "Method: A thread per matrix\nrow=%d col=%d\n", r1, c2);
         		for(int i = 0 ; i < r1 ; i++)
         		{
         	    		for(int j = 0 ; j < c2 ; j++)
@@ -298,7 +323,7 @@ void writeInFile(char *path, int method)
         		break;
 	
         	case 3:
-        		fprintf(f , "Method: A thread per element\nrow=%d col=%d\n",r1 , c2);
+        		fprintf(f, "Method: A thread per element\nrow=%d col=%d\n", r1, c2);
         		for(int i = 0 ; i < r1 ; i++)
         		{
         	    		for(int j = 0 ; j < c2 ; j++)
@@ -309,8 +334,7 @@ void writeInFile(char *path, int method)
     		        break;
     		        
     		default:
-    			perror("Error\n");
-        		exit(EXIT_FAILURE);
+        		exit(0);
         }		
     	
     	fclose(f);
